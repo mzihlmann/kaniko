@@ -64,7 +64,7 @@ func TestWithContext(t *testing.T) {
 			dockerImage := GetDockerImage(config.imageRepo, name)
 			kanikoImage := GetKanikoImage(config.imageRepo, name)
 
-			diff := containerDiff(t, daemonPrefix+dockerImage, kanikoImage, "--no-cache")
+			diff := containerDiff(t, daemonPrefix+dockerImage, kanikoImage, "--ignore-history")
 
 			expected := fmt.Sprintf(emptyContainerDiff, dockerImage, kanikoImage, dockerImage, kanikoImage)
 			checkContainerDiffOutput(t, diff, expected)

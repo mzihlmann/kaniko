@@ -24,8 +24,8 @@ Vagrant.configure("2") do |config|
     apt-get install -y docker-ce-cli docker-ce containerd.io
     usermod -a -G docker vagrant
 
-    curl -LO https://storage.googleapis.com/container-diff/latest/container-diff-linux-amd64
-    chmod +x container-diff-linux-amd64 && mv container-diff-linux-amd64 /usr/local/bin/container-diff
+    curl -LO https://github.com/reproducible-containers/diffoci/releases/download/v0.1.6/diffoci-v0.1.6.$(GOOS)-amd64 && \
+		chmod +x diffoci-v0.1.6.$(GOOS)-amd64 && sudo mv diffoci-v0.1.6.$(GOOS)-amd64 /usr/local/bin/diffoci
 
     wget --quiet https://storage.googleapis.com/pub/gsutil.tar.gz
     mkdir -p /opt/gsutil
