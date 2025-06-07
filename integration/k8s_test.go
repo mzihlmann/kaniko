@@ -130,7 +130,7 @@ func TestK8s(t *testing.T) {
 				t.Fatal(errR)
 			}
 
-			diff := containerDiff(t, daemonPrefix+dockerImage, kanikoImage, "--no-cache")
+			diff := containerDiff(t, daemonPrefix+dockerImage, kanikoImage, "--ignore-history")
 
 			expected := fmt.Sprintf(emptyContainerDiff, dockerImage, kanikoImage, dockerImage, kanikoImage)
 			checkContainerDiffOutput(t, diff, expected)

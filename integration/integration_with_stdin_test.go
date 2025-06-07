@@ -140,7 +140,7 @@ func TestBuildWithStdin(t *testing.T) {
 		t.Fatalf("can't wait %s: %v", kanikoCmdStdin.String(), err)
 	}
 
-	diff := containerDiff(t, daemonPrefix+dockerImage, kanikoImageStdin, "--no-cache")
+	diff := containerDiff(t, daemonPrefix+dockerImage, kanikoImageStdin, "--ignore-history")
 
 	expected := fmt.Sprintf(emptyContainerDiff, dockerImage, kanikoImageStdin, dockerImage, kanikoImageStdin)
 	checkContainerDiffOutput(t, diff, expected)
