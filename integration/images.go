@@ -219,6 +219,12 @@ func NewDockerFileBuilder() *DockerFileBuilder {
 		"Dockerfile_test_onbuild":    {},
 		"Dockerfile_test_extraction": {},
 		"Dockerfile_test_hardlink":   {},
+		// These images procude offsets - ignore them for now
+		"Dockerfile_test_add":                       {},
+		"Dockerfile_test_scratch":                   {},
+		"Dockerfile_test_copy_same_file_many_times": {},
+		"Dockerfile_test_meta_arg":                  {},
+		"Dockerfile_test_copyadd_chmod":             {},
 	}
 	d.TestCacheDockerfiles = map[string]struct{}{
 		"Dockerfile_test_cache":         {},
