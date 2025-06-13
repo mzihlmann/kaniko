@@ -16,8 +16,8 @@ FROM golang:1.24.4 AS builder
 WORKDIR /src
 
 # This arg is passed by docker buildx & contains the target CPU architecture (e.g., amd64, arm64, etc.)
-ARG TARGETARCH
-ARG TARGETOS
+ARG TARGETARCH=amd64
+ARG TARGETOS=linux
 
 ENV GOARCH=$TARGETARCH
 ENV GOOS=$TARGETOS
@@ -49,10 +49,7 @@ RUN go install github.com/awslabs/amazon-ecr-credential-helper/ecr-login/cli/doc
 # Get ACR docker env credential helper
 RUN go install github.com/chrismellard/docker-credential-acr-env
 
-RUN \
-  --mount=type=cache,target=/root/.cache/go-build \
-  --mount=type=cache,target=/go/pkg \
-  make out/executor out/warmer
+RUN make out/executor out/warmer
 
 # Generate latest ca-certificates
 FROM debian:bookworm-slim AS certs
@@ -60,11 +57,12 @@ RUN apt update && apt install -y ca-certificates
 
 # use musl busybox since it's staticly compiled on all platforms
 FROM busybox:musl AS busybox
+RUN mkdir -p /kaniko && chmod 777 /kaniko
 
 FROM scratch AS kaniko-base-slim
 
 # Create kaniko directory with world write permission to allow non root run
-RUN --mount=from=busybox,dst=/usr/ ["busybox", "sh", "-c", "mkdir -p /kaniko && chmod 777 /kaniko"]
+COPY --from=busybox /kaniko /kaniko
 
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /kaniko/ssl/certs/
 COPY files/nsswitch.conf /etc/nsswitch.conf
@@ -101,16 +99,17 @@ ENTRYPOINT ["/kaniko/executor"]
 
 FROM kaniko-executor AS kaniko-debug
 
-ENV PATH=/usr/local/bin:/kaniko:/busybox
+ARG BUSYBOX=/busybox
+ENV PATH=/usr/local/bin:/kaniko:${BUSYBOX}
 
 COPY --from=builder /src/out/warmer /kaniko/warmer
 
-COPY --from=busybox /bin /busybox
+COPY --from=busybox /bin ${BUSYBOX}
 # Declare /busybox as a volume to get it automatically in the path to ignore
-VOLUME /busybox
+VOLUME ${BUSYBOX}
 
-RUN ["/busybox/mkdir", "-p", "/bin"]
-RUN ["/busybox/ln", "-s", "/busybox/sh", "/bin/sh"]
+RUN ["${BUSYBOX}/mkdir", "-p", "/bin"]
+RUN ["${BUSYBOX}/ln", "-s", "${BUSYBOX}/sh", "/bin/sh"]
 
 FROM kaniko-base-slim AS kaniko-slim
 
