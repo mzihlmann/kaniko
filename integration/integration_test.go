@@ -218,6 +218,57 @@ func TestRun(t *testing.T) {
 	}
 }
 
+func TestBootstrap(t *testing.T) {
+	repo := getGitRepo(false)
+
+	// Build with docker
+	dockerImage := GetDockerImage(config.imageRepo, "bootstrap")
+	dockerCmd := exec.Command("docker",
+		append([]string{
+			"build",
+			"-t", dockerImage,
+			"-f", "deploy/Dockerfile",
+			repo,
+		})...)
+	out, err := RunCommandWithoutTest(dockerCmd)
+	if err != nil {
+		t.Errorf("Failed to build image %s with docker command %q: %s %s", dockerImage, dockerCmd.Args, err, string(out))
+	}
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Build with kaniko
+	kanikoImage := GetKanikoImage(config.imageRepo, "bootstrap")
+	dockerRunFlags := []string{"run", "--net=host"}
+	dockerRunFlags = addServiceAccountFlags(dockerRunFlags, config.serviceAccount)
+	dockerRunFlags = append(
+		dockerRunFlags,
+		"-v", pwd+"/..:/context",
+		ExecutorImage,
+		"-f", "/context/deploy/Dockerfile",
+		"-d", kanikoImage,
+		"--target", "kaniko-debug",
+		"--skip-unused-stages",
+		"--kaniko-dir", "/kaniko2",
+		"--context", "/context",
+	)
+
+	kanikoCmd := exec.Command("docker", dockerRunFlags...)
+
+	out, err = RunCommandWithoutTest(kanikoCmd)
+	if err != nil {
+		t.Errorf("Failed to build image %s with kaniko command %q: %v %s", "dockerImage", kanikoCmd.Args, err, string(out))
+	}
+
+	diff := containerDiff(t, daemonPrefix+dockerImage, kanikoImage, "--no-cache")
+
+	expected := fmt.Sprintf(emptyContainerDiff, dockerImage, kanikoImage, dockerImage, kanikoImage)
+	checkContainerDiffOutput(t, diff, expected)
+}
+
 func getBranchCommitAndURL() (branch, commit, url string) {
 	repo := os.Getenv("GITHUB_REPOSITORY")
 	commit = os.Getenv("GITHUB_SHA")

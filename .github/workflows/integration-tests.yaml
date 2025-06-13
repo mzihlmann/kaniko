@@ -30,6 +30,7 @@ jobs:
           - integration-test-misc
           - integration-test-run
           - k8s-executor-build-push integration-test-k8s
+          - integration-test-bootstrap
 
     steps:
       - name: Maximize build space
