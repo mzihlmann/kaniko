@@ -48,10 +48,10 @@ export GOFLAGS = -mod=vendor
 
 
 out/executor: $(GO_FILES)
-	GOARCH=$(GOARCH) GOOS=$(GOOS) CGO_ENABLED=0 go build -ldflags $(GO_LDFLAGS) -o $@ $(EXECUTOR_PACKAGE)
+	GOARCH=$(GOARCH) GOOS=$(GOOS) CGO_ENABLED=0 go build -buildvcs=false -ldflags $(GO_LDFLAGS) -o $@ $(EXECUTOR_PACKAGE)
 
 out/warmer: $(GO_FILES)
-	GOARCH=$(GOARCH) GOOS=$(GOOS) CGO_ENABLED=0 go build -ldflags $(GO_LDFLAGS) -o $@ $(WARMER_PACKAGE)
+	GOARCH=$(GOARCH) GOOS=$(GOOS) CGO_ENABLED=0 go build -buildvcs=false -ldflags $(GO_LDFLAGS) -o $@ $(WARMER_PACKAGE)
 
 .PHONY: install-container-diff
 install-container-diff:
@@ -85,6 +85,10 @@ integration-test-layers:
 .PHONY: integration-test-k8s
 integration-test-k8s:
 	@ ./scripts/integration-test.sh -run "TestK8s"
+
+.PHONY: integration-test-bootstrap
+integration-test-bootstrap:
+	@ ./scripts/integration-test.sh -run "TestBootstrap"
 
 .PHONY: integration-test-misc
 integration-test-misc:

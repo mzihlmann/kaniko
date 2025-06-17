@@ -19,7 +19,7 @@ set -e
 
 TESTS=$(./scripts/integration-test.sh -list=Test -mod=vendor)
 
-TESTS=$(echo $TESTS | tr ' ' '\n' | grep 'Test'| grep -v 'TestRun' | grep -v 'TestLayers' | grep -v 'TestK8s' | grep -v 'TestSnapshotBenchmark')
+TESTS=$(echo $TESTS | tr ' ' '\n' | grep 'Test'| grep -v 'TestRun' | grep -v 'TestLayers' | grep -v 'TestK8s' | grep -v 'TestSnapshotBenchmark' | grep -v 'TestBootstrap')
 
 RUN_ARG=''
 count=0
