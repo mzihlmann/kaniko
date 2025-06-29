@@ -20,60 +20,18 @@ jobs:
       # previous run if it's on the same commit SHA. This prevents a run for a
       # commit push from cancelling a previous commit push's build, since we
       # want an image built and tagged for each commit.
-      group: build-images-${{ matrix.image }}-${{ github.head_ref || github.sha }}
+      group: build-images-${{ github.head_ref || github.sha }}
       cancel-in-progress: true
 
     permissions:
       contents: read  # Read the repo contents.
-      id-token: write  # Produce identity token for keyless signing.
 
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        image:
-          - executor
-          - executor-debug
-          - executor-slim
-          - warmer
-          - bootstrap
 
-        include:
-          - image: executor
-            target: kaniko-executor
-            platforms: linux/amd64,linux/arm64,linux/s390x,linux/ppc64le
-            image-name: martizih/kaniko
-            tag: ${{ github.sha }}
-            release-tag: latest
-
-          - image: executor-debug
-            target: kaniko-debug
-            platforms: linux/amd64,linux/arm64,linux/s390x
-            image-name: martizih/kaniko
-            tag: ${{ github.sha }}-debug
-            release-tag: debug
-
-          - image: executor-slim
-            target: kaniko-slim
-            platforms: linux/amd64,linux/arm64,linux/s390x,linux/ppc64le
-            image-name: martizih/kaniko
-            tag: ${{ github.sha }}-slim
-            release-tag: slim
-
-          - image: warmer
-            target: kaniko-warmer
-            platforms: linux/amd64,linux/arm64,linux/s390x,linux/ppc64le
-            image-name: martizih/kaniko
-            tag: ${{ github.sha }}-warmer
-            release-tag: warmer
-
-          - image: bootstrap
-            target: kaniko-debug-2
-            platforms: linux/amd64,linux/arm64,linux/s390x,linux/ppc64le
-            image-name: martizih/kaniko
-            tag: ${{ github.sha }}-bootstrap
-            release-tag: bootstrap
-
+    env:
+      REGISTRY: martizih/kaniko
+      TAG: ${{ github.sha }}
+      
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
@@ -89,36 +47,69 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Don't build for all platforms on PRs.
-      - id: platforms
-        run: |
-          event="${{ github.event_name }}"
-          if [[ "$event" == "pull_request" ]]; then
-            echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
-          else
-            platforms="${{ matrix.platforms }}"
-            echo "platforms=${platforms}" >> $GITHUB_OUTPUT
-          fi
       # Build and push with Docker.
       - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
         with:
-          platforms: ${{ matrix.platforms }}
+          platforms: linux/amd64,linux/arm64,linux/s390x,linux/ppc64le
 
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
-      - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-        id: build-and-push
+      - uses: docker/bake-action@37816e747588cb137173af99ab33873600c46ea8 # v6.8.0
         with:
-          context: .
-          file: ./deploy/Dockerfile
-          platforms: ${{ steps.platforms.outputs.platforms }}
-          push: ${{ github.event_name != 'pull_request' }} # Only push if not a PR.
-          tags: ${{ matrix.image-name }}:${{ matrix.tag }}
-          no-cache-filters: certs
-          # https://github.com/docker/build-push-action/blob/master/docs/advanced/cache.md#github-cache
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          target: ${{ matrix.target }}
+          source: .
+          push: false
+          targets: executor,debug,slim,warmer,bootstrap
+
+  merge-manifests:
+    concurrency:
+      # If a previous run is ongoing with the same head_ref (it's a run on the
+      # same PR) then cancel it to save time. If it isn't a PR, only cancel the
+      # previous run if it's on the same commit SHA. This prevents a run for a
+      # commit push from cancelling a previous commit push's build, since we
+      # want an image built and tagged for each commit.
+      group: merge-manifests-${{ matrix.image }}-${{ github.head_ref || github.sha }}
+      cancel-in-progress: true
+
+    permissions:
+      contents: read  # Read the repo contents.
+      id-token: write  # Produce identity token for keyless signing.
+
+    needs: build-images
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - executor
+          - executor-debug
+          - executor-slim
+          - warmer
+          - bootstrap
+
+        include:
+          - image: executor          
+            image-name: martizih/kaniko
+            release-tag: latest
+
+          - image: executor-debug
+            image-name: martizih/kaniko
+            release-tag: debug
+
+          - image: executor-slim
+            image-name: martizih/kaniko
+            release-tag: slim
+
+          - image: warmer
+            image-name: martizih/kaniko
+            release-tag: warmer
+
+          - image: bootstrap
+            image-name: martizih/kaniko
+            release-tag: bootstrap
+  
+    steps:
+      - uses: imjasonh/setup-crane@31b88efe9de28ae0ffa220711af4b60be9435f6e # v0.4
 
       # Sign images if not a PR.
       - if: github.event_name != 'pull_request'
@@ -126,7 +117,7 @@ jobs:
       - if: github.event_name != 'pull_request'
         run: |
           cosign sign --yes \
-              ${{ matrix.image-name }}@${{ steps.build-and-push.outputs.digest }}
+              martizih/kaniko@${{ steps.build-and-push.outputs.digest }}
 
       # If a tag push, use crane to add more tags.
       - if: startsWith(github.ref, 'refs/tags/v')
@@ -137,15 +128,15 @@ jobs:
           tag=${GITHUB_REF/refs\/tags\//}
 
           # Tag :latest, :debug, :slim
-          crane cp ${{ matrix.image-name }}@${{ steps.build-and-push.outputs.digest }} \
-              ${{ matrix.image-name }}:${{ matrix.release-tag }}
+          crane cp martizih/kaniko@${{ steps.build-and-push.outputs.digest }} \
+              martizih/kaniko:${{ matrix.release-tag }}
 
           if [[ "${{ matrix.release-tag }}" == "latest" ]]; then
             # Tag :latest images as :v1.X.Y
-            crane cp ${{ matrix.image-name }}@${{ steps.build-and-push.outputs.digest }} \
-                ${{ matrix.image-name }}:${tag}
+            crane cp martizih/kaniko@${{ steps.build-and-push.outputs.digest }} \
+                martizih/kaniko:${tag}
           else
             # Or tag :v1.X.Y-debug and :v1.X.Y-slim
-            crane cp ${{ matrix.image-name }}@${{ steps.build-and-push.outputs.digest }} \
-                ${{ matrix.image-name }}:${tag}-${{ matrix.release-tag }}
+            crane cp martizih/kaniko@${{ steps.build-and-push.outputs.digest }} \
+                martizih/kaniko:${tag}-${{ matrix.release-tag }}
           fi

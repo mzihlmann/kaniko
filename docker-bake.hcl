@@ -18,6 +18,7 @@ target "executor" {
   no-cache-filter = ["certs"]
   cache-from = ["type=gha"]
   cache-to   = ["type=gha,mode=max"]
+  platforms = ["linux/amd64", "linux/arm64", "linux/s390x", "linux/ppc64le"]
 }
 
 target "debug" {
@@ -28,6 +29,7 @@ target "debug" {
   no-cache-filter = ["certs"]
   cache-from = ["type=gha"]
   cache-to   = ["type=gha,mode=max"]
+  platforms = ["linux/amd64", "linux/arm64", "linux/s390x"]
 }
 
 target "slim" {
@@ -38,6 +40,7 @@ target "slim" {
   no-cache-filter = ["certs"]
   cache-from = ["type=gha"]
   cache-to   = ["type=gha,mode=max"]
+  platforms = ["linux/amd64", "linux/arm64", "linux/s390x", "linux/ppc64le"]
 }
 
 target "warmer" {
@@ -48,6 +51,7 @@ target "warmer" {
   no-cache-filter = ["certs"]
   cache-from = ["type=gha"]
   cache-to   = ["type=gha,mode=max"]
+  platforms = ["linux/amd64", "linux/arm64", "linux/s390x", "linux/ppc64le"]
 }
 
 target "bootstrap" {
@@ -58,4 +62,5 @@ target "bootstrap" {
   no-cache-filter = ["certs"]
   cache-from = ["type=gha"]
   cache-to   = ["type=gha,mode=max"]
+  platforms = ["linux/amd64", "linux/arm64", "linux/s390x"]
 }
