@@ -65,6 +65,7 @@ var argsMap = map[string][]string{
 		"file3=context/b*",
 	},
 	"Dockerfile_test_multistage": {"file=/foo2"},
+	"Dockerfile_test_annotation": {"--annotation=myannotation=myvalue"},
 }
 
 // Environment to build Dockerfiles with, used for both docker and kaniko builds
