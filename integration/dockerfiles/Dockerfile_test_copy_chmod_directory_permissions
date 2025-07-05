@@ -1,0 +1,14 @@
+# Test for issue #3166: COPY --chmod=444 produces wrong directory permissions
+# This test verifies that directories get execute permissions when using restrictive chmod values
+FROM ubuntu
+
+# Test --chmod=444 (r--r--r--) -> directories should be 555 (r-xr-xr-x)
+COPY --chmod=444 context/bar/ /context1
+# Test --chmod=440 (r--r-----) -> directories should be 550 (r-xr-x---)
+COPY --chmod=440 context/bar/ /context2
+# Test --chmod=400 (r--------) -> directories should be 500 (r-x------)
+COPY --chmod=400 context/bar/ /context4
+# Test --chmod=644 (rw-r--r--) -> directories should be 755 (rwxr-xr-x)
+COPY --chmod=644 context/bar/ /context4
+# Test --chmod=600 (rw-------) -> directories should be 700 (rwx------)
+COPY --chmod=600 context/bar/ /context5

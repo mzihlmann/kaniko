@@ -690,6 +690,14 @@ func CopyDir(src, dest string, context FileContext, uid, gid int64, chmod fs.Fil
 			mode := chmod
 			if useDefaultChmod {
 				mode = fi.Mode()
+			} else {
+				// For directories, ensure execute bits are set for each read bit
+				// This ensures directories remain accessible when using restrictive chmod values
+				// e.g., 444 (r--r--r--) becomes 555 (r-xr-xr-x) for directories
+				// and 400 (r--------) becomes 500 (r-x------) for directories
+				// we leverage the fact that the read bit is always two bits offset from the execute bit
+				// to implement the conditional adding of execute bits.
+				mode |= (mode >> 2) & 0111
 			}
 			uid, gid := DetermineTargetFileOwnership(fi, uid, gid)
 			if err := MkdirAllWithPermissions(destPath, mode, uid, gid); err != nil {
