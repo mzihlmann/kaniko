@@ -48,7 +48,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Build and push with Docker.
-      - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+      - if: github.event_name != 'pull_request'
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
         with:
           platforms: linux/amd64,linux/arm64,linux/s390x,linux/ppc64le
 
@@ -59,6 +60,8 @@ jobs:
           source: .
           push: false
           targets: executor,debug,slim,warmer,bootstrap
+          set: |
+            *.platform=linux/amd64
 
   merge-manifests:
     concurrency:
