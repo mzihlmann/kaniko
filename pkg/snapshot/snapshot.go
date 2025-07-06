@@ -244,6 +244,7 @@ func writeToTar(t util.Tar, files, whiteouts []string) error {
 
 	// Now create the tar.
 	addedPaths := make(map[string]bool)
+	addedPaths["/"] = true
 
 	for _, path := range whiteouts {
 		skipWhiteout, err := parentPathIncludesNonDirectory(path)

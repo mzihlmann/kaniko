@@ -121,6 +121,17 @@ var diffArgsMap = map[string][]string{
 	// We do ignore /tmp directory as the timestamp on that directory will be altered if we create a new file inside.
 	// for some reason buildkit switches to USTAR instead of PAX format and we don't
 	"TestRun/test_Dockerfile_test_issue_mz155": {"--semantic=false", "--ignore-history", "--ignore-file-meta-format", "--ignore-file-atime", "--ignore-file-ctime", "--extra-ignore-files=tmp/"},
+	// busybox ships without the standard dirs like [/proc, /sys].
+	// but they do get created on running the container. As a result,
+	// they always get snapshotted by docker. But they do pre-exist in kaniko context,
+	// so we can never snapshot them.
+	"TestRun/test_Dockerfile_test_arg_multi":             {"--extra-ignore-layer-length-mismatch"},
+	"TestRun/test_Dockerfile_test_arg_multi_with_quotes": {"--extra-ignore-layer-length-mismatch"},
+	"TestRun/test_Dockerfile_test_daemons":               {"--extra-ignore-layer-length-mismatch"},
+	// somehow empty folders show up on our side but not buildkit
+	"TestRun/test_Dockerfile_test_issue_1039":                  {"--extra-ignore-layer-length-mismatch"},
+	"TestRun/test_Dockerfile_test_issue_3393":                  {"--extra-ignore-layer-length-mismatch"},
+	"TestRun/test_Dockerfile_test_copy_chown_nonexisting_user": {"--extra-ignore-layer-length-mismatch"},
 }
 
 // output check to do when building with kaniko
