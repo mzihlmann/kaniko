@@ -113,8 +113,6 @@ var diffArgsMap = map[string][]string{
 	"TestRun/test_Dockerfile_test_add": {"--extra-ignore-file-permissions"},
 	// FROM scratch we start with root, buildx doesnt
 	"TestRun/test_Dockerfile_test_workdir_with_user": {"--extra-ignore-file-permissions"},
-	// if group is not set, buildx defaults to 0
-	"TestRun/test_Dockerfile_test_user_nonexisting": {"--extra-ignore-file-permissions"},
 }
 
 // output check to do when building with kaniko
