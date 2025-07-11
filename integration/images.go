@@ -120,10 +120,6 @@ var diffArgsMap = map[string][]string{
 	"TestRun/test_Dockerfile_test_arg_multi":             {"--extra-ignore-layer-length-mismatch"},
 	"TestRun/test_Dockerfile_test_arg_multi_with_quotes": {"--extra-ignore-layer-length-mismatch"},
 	"TestRun/test_Dockerfile_test_daemons":               {"--extra-ignore-layer-length-mismatch"},
-	// somehow empty folders show up on our side but not buildkit
-	"TestRun/test_Dockerfile_test_issue_1039":                  {"--extra-ignore-layer-length-mismatch"},
-	"TestRun/test_Dockerfile_test_issue_3393":                  {"--extra-ignore-layer-length-mismatch"},
-	"TestRun/test_Dockerfile_test_copy_chown_nonexisting_user": {"--extra-ignore-layer-length-mismatch"},
 }
 
 // output check to do when building with kaniko
