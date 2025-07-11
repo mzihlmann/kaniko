@@ -175,12 +175,8 @@ func (s *Snapshotter) scanFullFilesystem() ([]string, []string, error) {
 	timer := timing.Start("Resolving Paths")
 
 	filesToAdd := []string{}
-	resolvedFiles, err := filesystem.ResolvePaths(changedPaths, s.ignorelist)
-	if err != nil {
-		return nil, nil, err
-	}
-	for _, path := range resolvedFiles {
-		if util.CheckIgnoreList(path) {
+	for _, path := range changedPaths {
+		if util.IsInProvidedIgnoreList(path, s.ignorelist) {
 			logrus.Debugf("Not adding %s to layer, as it's ignored", path)
 			continue
 		}
@@ -232,6 +228,7 @@ func writeToTar(t util.Tar, files, whiteouts []string) error {
 
 	// Now create the tar.
 	addedPaths := make(map[string]bool)
+	addedPaths["/"] = true
 
 	for _, path := range whiteouts {
 		skipWhiteout, err := parentPathIncludesNonDirectory(path)
