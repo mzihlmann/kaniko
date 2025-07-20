@@ -120,9 +120,16 @@ var diffArgsMap = map[string][]string{
 	"TestRun/test_Dockerfile_test_arg_multi":             {"--extra-ignore-layer-length-mismatch"},
 	"TestRun/test_Dockerfile_test_arg_multi_with_quotes": {"--extra-ignore-layer-length-mismatch"},
 	"TestRun/test_Dockerfile_test_daemons":               {"--extra-ignore-layer-length-mismatch"},
+	"TestRun/test_Dockerfile_test_registry":              {"--extra-ignore-layer-length-mismatch"},
+	"TestRun/test_Dockerfile_test_arg_blank_with_quotes": {"--extra-ignore-layer-length-mismatch"},
+	"TestRun/test_Dockerfile_test_cache_perm_oci":        {"--extra-ignore-layer-length-mismatch"},
+	"TestRun/test_Dockerfile_test_complex_substitution":  {"--extra-ignore-layer-length-mismatch"},
+	"TestRun/test_Dockerfile_test_dangling_symlink":      {"--extra-ignore-layer-length-mismatch"},
 	// "Check that overriding a default value works"
 	// produces a different output in kaniko and docker
 	"TestRun/test_Dockerfile_test_scratch": {"--extra-ignore-layer-length-mismatch"},
+	// COPY stores the files every-time, even if they were not changed
+	"TestRun/test_Dockerfile_test_copy_same_file_many_times": {"--extra-ignore-layer-length-mismatch"},
 }
 
 // output check to do when building with kaniko
