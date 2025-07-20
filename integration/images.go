@@ -120,7 +120,8 @@ var diffArgsMap = map[string][]string{
 	"TestRun/test_Dockerfile_test_arg_multi":             {"--extra-ignore-layer-length-mismatch"},
 	"TestRun/test_Dockerfile_test_arg_multi_with_quotes": {"--extra-ignore-layer-length-mismatch"},
 	"TestRun/test_Dockerfile_test_daemons":               {"--extra-ignore-layer-length-mismatch"},
-	// somehow this one is completely broken
+	// "Check that overriding a default value works"
+	// produces a different output in kaniko and docker
 	"TestRun/test_Dockerfile_test_scratch": {"--extra-ignore-layer-length-mismatch"},
 }
 
