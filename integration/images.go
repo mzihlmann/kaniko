@@ -590,6 +590,7 @@ func buildKanikoImage(
 	if err != nil {
 		return "", fmt.Errorf("Failed to build image %s with kaniko command \"%s\": %w", kanikoImage, kanikoCmd.Args, err)
 	}
+	logf(string(out))
 	if outputCheck := outputChecks[dockerfile]; outputCheck != nil {
 		if err := outputCheck(dockerfile, out); err != nil {
 			return "", fmt.Errorf("Output check failed for image %s with kaniko command : %w", kanikoImage, err)
