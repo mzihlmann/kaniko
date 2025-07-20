@@ -80,6 +80,10 @@ integration-test:
 integration-test-run:
 	@ ./scripts/integration-test.sh -run "TestRun"
 
+.PHONY: integration-test-tinker
+integration-test-tinker:
+	@ DOCKERFILE_PATTERN=Dockerfile_test_issue ./scripts/integration-test.sh -run "TestRun"
+
 .PHONY: integration-test-layers
 integration-test-layers:
 	@ ./scripts/integration-test.sh -run "TestLayers"
