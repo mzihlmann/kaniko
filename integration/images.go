@@ -315,7 +315,9 @@ func (d *DockerFileBuilder) BuildDockerImage(t *testing.T, imageRepo, dockerfile
 	dockerImage := strings.ToLower(imageRepo + dockerPrefix + dockerfile)
 
 	dockerArgs := []string{
+		"buildx",
 		"build",
+		"--load",
 		"--no-cache",
 		"-t", dockerImage,
 	}

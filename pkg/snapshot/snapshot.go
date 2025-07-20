@@ -88,6 +88,7 @@ func (s *Snapshotter) TakeSnapshot(files []string, shdCheckDelete bool) (string,
 			return "", fmt.Errorf("Unable to add file %s to layered map: %w", file, err)
 		}
 	}
+	logrus.Warnf("files: %v", filesToAdd)
 
 	// Get whiteout paths
 	var filesToWhiteout []string
@@ -134,6 +135,7 @@ func (s *Snapshotter) TakeSnapshotFS() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	logrus.Warnf("files: %v", filesToAdd)
 
 	if err := writeToTar(t, filesToAdd, filesToWhiteOut); err != nil {
 		return "", err
