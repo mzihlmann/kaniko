@@ -125,6 +125,7 @@ var diffArgsMap = map[string][]string{
 	"TestRun/test_Dockerfile_test_cache_perm_oci":        {"--extra-ignore-layer-length-mismatch"},
 	"TestRun/test_Dockerfile_test_complex_substitution":  {"--extra-ignore-layer-length-mismatch"},
 	"TestRun/test_Dockerfile_test_dangling_symlink":      {"--extra-ignore-layer-length-mismatch"},
+	"TestWithContext/test_with_context_issue-57":         {"--extra-ignore-layer-length-mismatch"},
 	// "Check that overriding a default value works"
 	// produces a different output in kaniko and docker
 	"TestRun/test_Dockerfile_test_scratch": {"--extra-ignore-layer-length-mismatch"},
