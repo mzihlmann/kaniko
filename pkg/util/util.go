@@ -51,7 +51,9 @@ func Hasher() func(string) (string, error) {
 			return "", err
 		}
 		h.Write([]byte(fi.Mode().String()))
-		h.Write([]byte(fi.ModTime().String()))
+		if !fi.IsDir() {
+			h.Write([]byte(fi.ModTime().String()))
+		}
 
 		h.Write([]byte(strconv.FormatUint(uint64(fi.Sys().(*syscall.Stat_t).Uid), 36)))
 		h.Write([]byte(","))
