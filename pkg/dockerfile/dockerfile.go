@@ -347,6 +347,19 @@ func unifyArgs(metaArgs []instructions.ArgCommand, buildArgs []string) []string 
 	return args
 }
 
+func mergeStages(a, b instructions.Stage) instructions.Stage {
+	return instructions.Stage{
+		Name:       b.Name,
+		Commands:   append(a.Commands, b.Commands...),
+		OrigCmd:    a.OrigCmd,
+		BaseName:   a.BaseName,
+		Platform:   a.Platform,
+		Comment:    a.Comment + b.Comment,
+		SourceCode: a.SourceCode,
+		Location:   append(a.Location, b.Location...),
+	}
+}
+
 // skipUnusedStages returns the list of used stages without the unnecessaries ones
 func skipUnusedStages(stages []instructions.Stage, lastStageIndex *int, target string) []instructions.Stage {
 	stageByName := make(map[string]int)
@@ -357,11 +370,12 @@ func skipUnusedStages(stages []instructions.Stage, lastStageIndex *int, target s
 		}
 	}
 
-	stagesDependencies := make([]bool, len(stages))
-	stagesDependencies[*lastStageIndex] = true
+	stagesDependencies := make([]int, len(stages))
+	isCopiedFrom := make([]bool, len(stages))
+	stagesDependencies[*lastStageIndex] = 1
 
 	for i := *lastStageIndex; i >= 0; i-- {
-		if !stagesDependencies[i] {
+		if stagesDependencies[i] == 0 {
 			continue
 		}
 		s := stages[i]
@@ -369,31 +383,44 @@ func skipUnusedStages(stages []instructions.Stage, lastStageIndex *int, target s
 			// There can be references that appear as non-existing stages
 			// ie. `FROM debian AS base` would try refer to `debian` as stage
 			// before falling back to `debian` as a docker image.
-			stagesDependencies[BaseIndex] = true
+			stagesDependencies[BaseIndex]++
 		}
 		for _, c := range s.Commands {
 			switch cmd := c.(type) {
 			case *instructions.CopyCommand:
 				if copyFromIndex, err := strconv.Atoi(cmd.From); err == nil {
 					// numeric reference `COPY --from=0`
-					stagesDependencies[copyFromIndex] = true
+					stagesDependencies[copyFromIndex]++
+					isCopiedFrom[copyFromIndex] = true
 				} else {
 					// named reference `COPY --from=base`
 					if copyFromIndex, ok := stageByName[strings.ToLower(cmd.From)]; ok {
 						// There can be references that appear as non-existing stages
 						// ie. `COPY --from=debian` would try refer to `debian` as stage
 						// before falling back to `debian` as a docker image.
-						stagesDependencies[copyFromIndex] = true
+						stagesDependencies[copyFromIndex]++
+						isCopiedFrom[copyFromIndex] = true
 					}
 				}
 			}
 		}
 	}
 
+	newStageByName := make(map[string]int)
 	var onlyUsedStages []instructions.Stage
 	for i := 0; i < *lastStageIndex+1; i++ {
-		if stagesDependencies[i] {
+		if stagesDependencies[i] == 1 && !isCopiedFrom[i] {
+			// merge stages[i] to stages[i].BaseName
+			if idx, ok := newStageByName[strings.ToLower(stages[i].BaseName)]; ok {
+				onlyUsedStages[idx] = mergeStages(onlyUsedStages[idx], stages[i])
+				newStageByName[stages[i].Name] = idx
+				continue
+			}
+			logrus.Warnf("failed to merge stages %s and %s", stages[i].BaseName, stages[i].Name)
+		}
+		if stagesDependencies[i] != 0 {
 			onlyUsedStages = append(onlyUsedStages, stages[i])
+			newStageByName[stages[i].Name] = len(onlyUsedStages) - 1
 		}
 	}
 	*lastStageIndex = len(onlyUsedStages) - 1
