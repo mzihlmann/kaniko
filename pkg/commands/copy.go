@@ -65,6 +65,7 @@ func (c *CopyCommand) ExecuteCommand(config *v1.Config, buildArgs *dockerfile.Bu
 			//   are created with a default UID and GID of 0.
 			// But this is a breaking change so we keep it optional for now
 			user = "0:0"
+			logrus.Warnf("HERE")
 		}
 		uid, gid, err = getActiveUserGroup(user, c.cmd.Chown, replacementEnvs)
 		if err != nil {
