@@ -16,7 +16,9 @@
 set -e
 
 function start_local_registry {
-  docker start registry || docker run --name registry -d -p 5000:5000 registry:2
+  docker start registry || docker run --name registry -d --network=host \
+    -v "$(pwd)/integration/config/registry-config.yml:/etc/docker/registry/config.yml" \
+    registry:2
 }
 
 # TODO: to get this working, we need a way to override the gcs endpoint of kaniko at runtime

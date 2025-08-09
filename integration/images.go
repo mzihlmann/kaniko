@@ -109,8 +109,8 @@ var diffArgsMap = map[string][]string{
 	// FROM scratch we start with root, buildkit doesnt
 	"TestRun/test_Dockerfile_test_workdir_with_user": {"--extra-ignore-file-permissions"},
 	// We don't handle user nobody=-1 nogroup=-1 correctly
-	"TestRun/test_Dockerfile_test_issue_mz108": {"--extra-ignore-file-permissions"},
-	"TestRun/test_Dockerfile_test_issue_3166":  {"--extra-ignore-file-permissions"},
+	// "TestRun/test_Dockerfile_test_issue_mz108": {"--extra-ignore-file-permissions"},
+	// "TestRun/test_Dockerfile_test_issue_3166":  {"--extra-ignore-file-permissions"},
 	// if group is not set, buildkit defaults to 0
 	"TestRun/test_Dockerfile_test_user_nonexisting": {"--extra-ignore-file-permissions"},
 	// #mz155: `COPY --from` does not copy the timestamps from the source but touches new files with new timestamps.

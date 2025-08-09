@@ -23,6 +23,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 // CacheOptions are base image cache options that are set by command line arguments
@@ -184,6 +186,7 @@ type WarmerOptions struct {
 
 func EnvBool(key string) bool {
 	val := os.Getenv(key)
+	logrus.Infof("value: %s", val)
 	ok, err := strconv.ParseBool(val)
 	return err == nil && ok
 }

@@ -22,6 +22,7 @@ jobs:
       REGISTRY: 'localhost:5000'
       DOCKER_BUILDKIT: '1'
       FF_KANIKO_COPY_AS_ROOT: '1'
+      KANIKO_REGISTRY_MIRROR: 172.17.0.1:5000
 
     strategy:
       fail-fast: false
@@ -50,6 +51,10 @@ jobs:
           persist-credentials: false
 
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        with:
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ["localhost:5000"]
 
       - run: make install-diffoci k3s-setup
       - run: make ${{ matrix.make-target }}
