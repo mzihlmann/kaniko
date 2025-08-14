@@ -105,6 +105,8 @@ func (t *Tar) AddFileToTar(p string) error {
 	if p == config.RootDir {
 		// allow entry for / to preserve permission changes etc. (currently ignored anyway by Docker runtime)
 		hdr.Name = "/"
+		logrus.Warnf("unreachable code")
+		return fmt.Errorf("unreachable code")
 	} else {
 		// Docker uses no leading / in the tarball
 		hdr.Name = strings.TrimPrefix(p, config.RootDir)
