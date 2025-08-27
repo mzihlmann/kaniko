@@ -53,6 +53,16 @@ func (r *RunCommand) ExecuteCommand(config *v1.Config, buildArgs *dockerfile.Bui
 }
 
 func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun *instructions.RunCommand) error {
+	var CmdLine []string
+	if len(cmdRun.Files) > 0 {
+		if len(cmdRun.Files) != 1 {
+			logrus.Panicf("unexpected number of inline files %d", len(cmdRun.Files))
+		}
+		CmdLine = []string{cmdRun.Files[0].Data}
+	} else {
+		CmdLine = cmdRun.CmdLine
+	}
+
 	var newCommand []string
 	if cmdRun.PrependShell {
 		// This is the default shell on Linux
@@ -63,9 +73,9 @@ func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun
 			shell = append(shell, "/bin/sh", "-c")
 		}
 
-		newCommand = append(shell, strings.Join(cmdRun.CmdLine, " "))
+		newCommand = append(shell, strings.Join(CmdLine, " "))
 	} else {
-		newCommand = cmdRun.CmdLine
+		newCommand = CmdLine
 		// Find and set absolute path of executable by setting PATH temporary
 		replacementEnvs := buildArgs.ReplacementEnvs(config.Env)
 		for _, v := range replacementEnvs {
