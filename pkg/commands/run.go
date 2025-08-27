@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -52,15 +53,31 @@ func (r *RunCommand) ExecuteCommand(config *v1.Config, buildArgs *dockerfile.Bui
 	return runCommandInExec(config, buildArgs, r.cmd)
 }
 
-func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun *instructions.RunCommand) error {
-	var CmdLine []string
+func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun *instructions.RunCommand) (retErr error) {
+	lines := cmdRun.CmdLine
+	logrus.Warnf("line: %v", lines)
 	if len(cmdRun.Files) > 0 {
-		if len(cmdRun.Files) != 1 {
-			logrus.Panicf("unexpected number of inline files %d", len(cmdRun.Files))
+		heredocDir := "/kaniko/heredocs"
+		err := os.Mkdir(heredocDir, 0o755)
+		if err != nil {
+			return errors.Wrapf(err, "creating heredocs dir %s", heredocDir)
 		}
-		CmdLine = []string{cmdRun.Files[0].Data}
-	} else {
-		CmdLine = cmdRun.CmdLine
+		for _, h := range cmdRun.Files {
+			path := filepath.Join(heredocDir, h.Name)
+			err = os.WriteFile(path, []byte(h.Data), 0o555)
+			if err != nil {
+				return errors.Wrapf(err, "writing heredoc %s", path)
+			}
+		}
+		for i, line := range lines {
+			lines[i] = strings.ReplaceAll(line, "<<", heredocDir+"/")
+		}
+		defer func() {
+			err := os.RemoveAll(heredocDir)
+			if err != nil {
+				retErr = errors.Wrapf(err, "deleting heredoc dir %s", heredocDir)
+			}
+		}()
 	}
 
 	var newCommand []string
@@ -73,9 +90,9 @@ func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun
 			shell = append(shell, "/bin/sh", "-c")
 		}
 
-		newCommand = append(shell, strings.Join(CmdLine, " "))
+		newCommand = append(shell, strings.Join(lines, " "))
 	} else {
-		newCommand = CmdLine
+		newCommand = lines
 		// Find and set absolute path of executable by setting PATH temporary
 		replacementEnvs := buildArgs.ReplacementEnvs(config.Env)
 		for _, v := range replacementEnvs {
