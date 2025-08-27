@@ -1,14 +1,12 @@
 FROM busybox
-RUN <<EOF
+RUN <<EOF && ls -la /tmp
 touch /tmp/bli
 touch /tmp/bla
 touch /tmp/blubb
 ls -la /tmp
 EOF
-RUN ls -la /kaniko
-RUN ls -la /tmp
 
-RUN cat <<file1.txt <<file2.txt > /tmp/file1.txt
+RUN cat <<file1.txt > /tmp/file1.txt && cat <<file2.txt >> /tmp/file1.txt
 Hello from file1
 file1.txt
 Hello from file2

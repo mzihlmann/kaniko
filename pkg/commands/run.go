@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -54,32 +53,6 @@ func (r *RunCommand) ExecuteCommand(config *v1.Config, buildArgs *dockerfile.Bui
 }
 
 func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun *instructions.RunCommand) (retErr error) {
-	lines := cmdRun.CmdLine
-	logrus.Warnf("line: %v", lines)
-	if len(cmdRun.Files) > 0 {
-		heredocDir := "/kaniko/heredocs"
-		err := os.Mkdir(heredocDir, 0o755)
-		if err != nil {
-			return errors.Wrapf(err, "creating heredocs dir %s", heredocDir)
-		}
-		for _, h := range cmdRun.Files {
-			path := filepath.Join(heredocDir, h.Name)
-			err = os.WriteFile(path, []byte(h.Data), 0o555)
-			if err != nil {
-				return errors.Wrapf(err, "writing heredoc %s", path)
-			}
-		}
-		for i, line := range lines {
-			lines[i] = strings.ReplaceAll(line, "<<", heredocDir+"/")
-		}
-		defer func() {
-			err := os.RemoveAll(heredocDir)
-			if err != nil {
-				retErr = errors.Wrapf(err, "deleting heredoc dir %s", heredocDir)
-			}
-		}()
-	}
-
 	var newCommand []string
 	if cmdRun.PrependShell {
 		// This is the default shell on Linux
@@ -90,9 +63,9 @@ func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun
 			shell = append(shell, "/bin/sh", "-c")
 		}
 
-		newCommand = append(shell, strings.Join(lines, " "))
+		newCommand = append(shell, strings.Join(cmdRun.CmdLine, " "))
 	} else {
-		newCommand = lines
+		newCommand = cmdRun.CmdLine
 		// Find and set absolute path of executable by setting PATH temporary
 		replacementEnvs := buildArgs.ReplacementEnvs(config.Env)
 		for _, v := range replacementEnvs {
@@ -109,7 +82,9 @@ func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun
 			}
 		}
 	}
-
+	for _, h := range cmdRun.Files {
+		newCommand[2] = newCommand[2] + "\n" + h.Data + h.Name
+	}
 	logrus.Infof("Cmd: %s", newCommand[0])
 	logrus.Infof("Args: %s", newCommand[1:])
 
