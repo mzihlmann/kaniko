@@ -1,0 +1,9 @@
+FROM ubuntu:24.04
+
+RUN ls -la /var/run || true
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        mysql-server-8.0 \
+    && rm -rf /var/lib/apt/lists/*
