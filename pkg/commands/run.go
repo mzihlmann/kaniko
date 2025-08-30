@@ -52,7 +52,7 @@ func (r *RunCommand) ExecuteCommand(config *v1.Config, buildArgs *dockerfile.Bui
 	return runCommandInExec(config, buildArgs, r.cmd)
 }
 
-func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun *instructions.RunCommand) error {
+func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun *instructions.RunCommand) (retErr error) {
 	var newCommand []string
 	if cmdRun.PrependShell {
 		// This is the default shell on Linux
@@ -82,7 +82,9 @@ func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun
 			}
 		}
 	}
-
+	for _, h := range cmdRun.Files {
+		newCommand[2] = newCommand[2] + "\n" + h.Data + h.Name
+	}
 	logrus.Infof("Cmd: %s", newCommand[0])
 	logrus.Infof("Args: %s", newCommand[1:])
 
