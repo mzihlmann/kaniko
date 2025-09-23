@@ -52,8 +52,22 @@ func (r *RunCommand) ExecuteCommand(config *v1.Config, buildArgs *dockerfile.Bui
 	return runCommandInExec(config, buildArgs, r.cmd)
 }
 
+func expand(word string) (string, error) {
+	return word, nil
+}
+
 func runCommandInExec(config *v1.Config, buildArgs *dockerfile.BuildArgs, cmdRun *instructions.RunCommand) error {
 	var newCommand []string
+	if len(cmdRun.FlagsUsed) > 0 {
+		logrus.Warnf("Kaniko does not support '--%s' flags in RUN statements - relying on flags can lead to invalid builds", cmdRun.FlagsUsed[0])
+		err := cmdRun.Expand(expand)
+		if err != nil {
+			return err
+		}
+		mounts := instructions.GetMounts(cmdRun)
+		logrus.Warnf("type: %v", mounts[0].Type)
+		logrus.Warnf("target: %v", mounts[0].Target)
+	}
 	if cmdRun.PrependShell {
 		// This is the default shell on Linux
 		var shell []string
