@@ -1377,6 +1377,12 @@ Many multi-stage Dockerfiles include intermediate stages that only become releva
 Set this flag to `true` to squash stages together. Defaults to `false`.
 Becomes default in `v1.26.0`.
 
+#### Flag `FF_KANIKO_REWRITE_TO_OCI`
+When we store an image using warmer they get force rewritten to dockerv2 by the tarball library.
+This causes builds to be different if you build from remote or from local warmer.
+Set this flag to `true` to force the loaded image into OCI format again. Defaults to `false`.
+Becomes default in `v1.26.0`.
+
 ### Debug Image
 
 The kaniko executor image is based on scratch and doesn't contain a shell. We

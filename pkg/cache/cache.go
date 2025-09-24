@@ -30,8 +30,10 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/layout"
+	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -231,6 +233,10 @@ func cachedImageFromPath(p string) (v1.Image, error) {
 	imgTar, err := tarball.ImageFromPath(p, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting image from path")
+	}
+
+	if config.EnvBool("FF_KANIKO_REWRITE_TO_OCI") {
+		imgTar = mutate.MediaType(imgTar, types.OCIManifestSchema1)
 	}
 
 	// Manifests may be present next to the tar, named with a ".json" suffix
